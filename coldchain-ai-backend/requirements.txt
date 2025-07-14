@@ -1,0 +1,11 @@
+# requirements.txt - Python dependencies
+
+fastapi[all]
+sqlalchemy
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+# Thêm các thư viện khác ở đây khi cần, ví dụ:
+# requests
+# aiohttp
