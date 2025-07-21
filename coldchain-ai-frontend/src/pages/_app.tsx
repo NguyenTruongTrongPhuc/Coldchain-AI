@@ -1,4 +1,6 @@
-import '@/styles/globals.css'; // <--- DÒNG QUAN TRỌNG NHẤT
+import '@/styles/globals.css'; 
+import 'react-grid-layout/css/styles.css'; 
+import 'react-resizable/css/styles.css'; 
 import type { AppProps } from 'next/app';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
