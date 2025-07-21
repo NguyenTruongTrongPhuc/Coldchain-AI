@@ -7,6 +7,7 @@ from typing import List
 from .... import crud, schemas
 from ....core.database import get_db
 from ....core.dependencies import get_current_active_user
+from .... import crud, schemas, models
 
 router = APIRouter()
 
