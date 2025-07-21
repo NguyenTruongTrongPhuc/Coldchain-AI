@@ -1,5 +1,4 @@
-// src/pages/_app.tsx
-import '@/styles/globals.css';
+import '@/styles/globals.css'; // <--- DÒNG QUAN TRỌNG NHẤT
 import type { AppProps } from 'next/app';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
@@ -27,7 +26,6 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
         return <Component {...pageProps} />;
     }
     
-    // Nếu đã đăng nhập và không phải trang public, hiển thị layout dashboard
     if (auth.isAuthenticated) {
         return (
             <DashboardLayout>
@@ -36,7 +34,6 @@ const AppWrapper = ({ Component, pageProps }: AppProps) => {
         );
     }
     
-    // Fallback để tránh render trang private khi chưa xác thực
     return null; 
 };
 
