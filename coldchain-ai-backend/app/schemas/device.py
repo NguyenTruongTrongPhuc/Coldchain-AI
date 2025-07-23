@@ -1,21 +1,27 @@
 # app/schemas/device.py
-# TODO: Hoàn thiện schema này
 from typing import Optional
 from pydantic import BaseModel
 
+# Schema cơ sở, chứa các trường chung
 class DeviceBase(BaseModel):
     tracker_id: str
     name: Optional[str] = None
-    status: Optional[str] = "inactive"
-    battery_level: Optional[float] = None
+    last_location: Optional[str] = None
+    battery: Optional[float] = None
 
+# Schema dùng khi tạo mới một thiết bị
 class DeviceCreate(DeviceBase):
     pass
 
+# Schema dùng khi cập nhật một thiết bị
 class DeviceUpdate(DeviceBase):
     pass
 
+# Schema dùng để trả về dữ liệu từ API
 class Device(DeviceBase):
     id: int
+    status: str
+    connection: str
+
     class Config:
-        orm_mode = True
+        from_attributes = True

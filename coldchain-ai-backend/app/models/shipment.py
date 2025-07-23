@@ -1,17 +1,17 @@
 # app/models/shipment.py
-# TODO: Hoàn thiện model này ở các phần sau
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from ..core.database import Base
 
 class Shipment(Base):
     __tablename__ = "shipments"
+
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    product_type = Column(String)
-    temp_min = Column(Float)
-    temp_max = Column(Float)
-    start_location = Column(String)
-    end_location = Column(String)
-    start_time = Column(DateTime)
-    end_time = Column(DateTime, nullable=True)
+    name = Column(String, index=True, nullable=False)
     status = Column(String, default="pending") # pending, in_transit, completed, failed
+    start_location = Column(String, nullable=True)
+    end_location = Column(String, nullable=True)
+
+    # Mối quan hệ: Một lô hàng được gán cho MỘT thiết bị
+    device_id = Column(Integer, ForeignKey("devices.id"), nullable=True)
+    device = relationship("Device", back_populates="shipments")

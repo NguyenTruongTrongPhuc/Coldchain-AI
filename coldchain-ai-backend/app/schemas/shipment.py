@@ -1,23 +1,23 @@
 # app/schemas/shipment.py
-# TODO: Hoàn thiện schema này
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
+from .device import Device # Import schema Device để lồng vào
 
 class ShipmentBase(BaseModel):
     name: str
-    product_type: Optional[str] = None
-    temp_min: Optional[float] = None
-    temp_max: Optional[float] = None
+    start_location: Optional[str] = None
+    end_location: Optional[str] = None
 
 class ShipmentCreate(ShipmentBase):
-    device_tracker_id: str # ID của tracker được gán vào lô hàng
+    device_id: int # Khi tạo, chỉ cần truyền ID của thiết bị
+
+class ShipmentUpdate(ShipmentBase):
+    pass
 
 class Shipment(ShipmentBase):
     id: int
     status: str
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    
+    device: Optional[Device] = None # Trả về toàn bộ thông tin device đã được gán
+
     class Config:
-        orm_mode = True
+        from_attributes = True

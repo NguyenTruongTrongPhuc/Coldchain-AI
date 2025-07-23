@@ -6,3 +6,4 @@ from .device import Device, DeviceCreate, DeviceUpdate
 from .shipment import Shipment, ShipmentCreate
 from .alert import Alert
 from .sensor_data import SensorData
+from .activity_log import ActivityLog, ActivityLogCreate
