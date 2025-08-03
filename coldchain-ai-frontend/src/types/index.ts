@@ -40,3 +40,23 @@ export interface ActivityLog {
     log_type: 'system' | 'user_note';
     content: string;
 }
+
+export interface Alert {
+    id: number;
+    shipment_id: number;
+    alert_type: string;
+    message: string;
+    timestamp: string;
+    priority: string;
+    status: 'active' | 'resolved';
+    resolution_note?: string;
+}
+
+export interface Report {
+    id: number;
+    name: string;
+    created_at: string;
+    status: 'completed' | 'processing' | 'failed';
+    file_path: string | null;
+    user_id: number;
+}

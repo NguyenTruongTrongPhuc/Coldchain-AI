@@ -6,3 +6,4 @@ from . import shipment
 from . import sensor_data
 from . import alert
 from . import activity_log
+from . import report

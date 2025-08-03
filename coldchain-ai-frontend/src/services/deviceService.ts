@@ -15,6 +15,11 @@ interface DeviceCreationData {
     name: string;
 }
 
+interface DevicePayload {
+    tracker_id: string;
+    name: string;
+}
+
 export const getDevices = (params: GetDevicesParams): Promise<{ data: Device[] }> => {
     return apiClient.get('/devices', { params });
 };
@@ -30,4 +35,12 @@ export const getDeviceLogs = (id: string): Promise<{ data: ActivityLog[] }> => {
 
 export const createDevice = (deviceData: DeviceCreationData): Promise<{ data: Device }> => {
     return apiClient.post('/devices', deviceData);
+};
+
+export const deleteDevice = (id: number): Promise<void> => {
+    return apiClient.delete(`/devices/${id}`);
+};
+
+export const updateDevice = (id: number, deviceData: Partial<DevicePayload>): Promise<{ data: Device }> => {
+    return apiClient.put(`/devices/${id}`, deviceData);
 };

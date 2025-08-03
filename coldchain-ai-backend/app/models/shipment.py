@@ -15,3 +15,5 @@ class Shipment(Base):
     # Mối quan hệ: Một lô hàng được gán cho MỘT thiết bị
     device_id = Column(Integer, ForeignKey("devices.id"), nullable=True)
     device = relationship("Device", back_populates="shipments")
+    
+    alerts = relationship("Alert", back_populates="shipment")

@@ -103,7 +103,7 @@ const ShipmentListPage = () => {
                                 <h3 className="font-bold text-lg text-gray-900 dark:text-white">{selectedShipment.name}</h3>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2 text-sm">
                                     <div>
-                                        <p className="text-xs text-gray-500">Trạng thái:</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">Trạng thái:</p>
                                         <p className="font-medium"><StatusBadge status={selectedShipment.status} /></p>
                                     </div>
                                     <div>

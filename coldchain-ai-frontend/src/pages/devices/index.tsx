@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { Wifi, WifiOff, BatteryFull, BatteryMedium, BatteryLow, MapPin, Plus, Filter, MoreVertical, Search, Edit, Trash2, Clock, Loader2, X } from 'lucide-react';
+import { Wifi, WifiOff, BatteryFull, BatteryMedium, BatteryLow, MapPin, Plus, Filter, MoreVertical, Search, Edit, Trash2, Clock, Loader2, X, AlertTriangle } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
-import { getDevices, createDevice } from '@/services/deviceService';
+import { getDevices, createDevice, deleteDevice, updateDevice } from '@/services/deviceService';
 import { Device } from '@/types';
 import { toast } from 'react-hot-toast';
 
@@ -39,6 +39,11 @@ const DeviceListPage = () => {
     const [activeMenu, setActiveMenu] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     
+    const [deviceToEdit, setDeviceToEdit] = useState<Device | null>(null);
+    const [editedData, setEditedData] = useState({ tracker_id: '', name: '' });
+
+    const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
+
     const [newTrackerId, setNewTrackerId] = useState('');
     const [newDeviceName, setNewDeviceName] = useState('');
 
@@ -78,6 +83,45 @@ const DeviceListPage = () => {
             error: (err) => {
                  return err.response?.data?.detail || "Thêm thiết bị thất bại.";
             },
+        });
+    };
+
+    const handleDeleteDevice = async () => {
+        if (!deviceToDelete) return;
+
+        const promise = deleteDevice(deviceToDelete.id);
+
+        toast.promise(promise, {
+            loading: 'Đang xóa thiết bị...',
+            success: () => {
+                fetchDevices(); // Tải lại danh sách sau khi xóa
+                setDeviceToDelete(null); // Đóng modal xác nhận
+                return `Xóa thiết bị ${deviceToDelete.name} thành công!`;
+            },
+            error: (err) => `Xóa thất bại: ${err.response?.data?.detail || 'Lỗi không xác định'}`,
+        });
+    };
+
+    const openEditModal = (device: Device) => {
+        setDeviceToEdit(device);
+        setEditedData({ tracker_id: device.tracker_id, name: device.name });
+        setActiveMenu(null); // Đóng menu dropdown
+    };
+
+    const handleUpdateDevice = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!deviceToEdit) return;
+
+        const promise = updateDevice(deviceToEdit.id, editedData);
+
+        toast.promise(promise, {
+            loading: 'Đang cập nhật...',
+            success: () => {
+                fetchDevices(); // Tải lại danh sách
+                setDeviceToEdit(null); // Đóng modal
+                return 'Cập nhật thiết bị thành công!';
+            },
+            error: (err) => `Cập nhật thất bại: ${err.response?.data?.detail || 'Lỗi không xác định'}`,
         });
     };
     
@@ -134,8 +178,18 @@ const DeviceListPage = () => {
                                                 {activeMenu === device.id && (
                                                     <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border dark:border-gray-600">
                                                         <Link href={`/devices/${device.id}`} className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"><Clock size={14} className="mr-2" /> Xem chi tiết & Real-time</Link>
-                                                        <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"><Edit size={14} className="mr-2" /> Chỉnh sửa thông tin</a>
-                                                        <a href="#" className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"><Trash2 size={14} className="mr-2" /> Xóa thiết bị</a>
+                                                        <button onClick={() => openEditModal(device)} className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                                            <Edit size={14} className="mr-2" /> Chỉnh sửa thông tin
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                setDeviceToDelete(device);
+                                                                setActiveMenu(null); // Đóng menu dropdown
+                                                            }} 
+                                                            className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                        >
+                                                            <Trash2 size={14} className="mr-2" /> Xóa thiết bị
+                                                        </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -163,6 +217,41 @@ const DeviceListPage = () => {
                     <div className="flex justify-end pt-4 space-x-2">
                         <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700">Hủy</button>
                         <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700">Thêm thiết bị</button>
+                    </div>
+                </form>
+            </Modal>
+
+            <Modal isOpen={!!deviceToDelete} onClose={() => setDeviceToDelete(null)} title="Xác nhận xóa">
+                <div className="text-center">
+                    <AlertTriangle className="mx-auto mb-4 h-14 w-14 text-red-500" />
+                    <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+                        Bạn có chắc chắn muốn xóa thiết bị <br />
+                        <span className="font-bold font-mono">{deviceToDelete?.tracker_id}</span>?
+                    </h3>
+                    <div className="flex justify-center gap-4">
+                        <button onClick={handleDeleteDevice} className="px-6 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700">
+                            Vâng, tôi chắc chắn
+                        </button>
+                        <button onClick={() => setDeviceToDelete(null)} className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700">
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={!!deviceToEdit} onClose={() => setDeviceToEdit(null)} title="Chỉnh sửa thiết bị">
+                <form onSubmit={handleUpdateDevice} className="space-y-4">
+                    <div>
+                        <label htmlFor="edit_tracker_id" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Mã Tracker (ID)</label>
+                        <input type="text" id="edit_tracker_id" value={editedData.tracker_id} onChange={e => setEditedData({...editedData, tracker_id: e.target.value})} required className="mt-1 block w-full text-gray-900 border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                     <div>
+                        <label htmlFor="edit_device_name" className="block text-sm font-medium text-gray-700 dark:text-gray-200">Tên gợi nhớ</label>
+                        <input type="text" id="edit_device_name" value={editedData.name} onChange={e => setEditedData({...editedData, name: e.target.value})} required className="mt-1 block w-full text-gray-900 border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+                    </div>
+                    <div className="flex justify-end pt-4 space-x-2">
+                        <button type="button" onClick={() => setDeviceToEdit(null)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-500 dark:hover:bg-gray-700">Hủy</button>
+                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700">Lưu thay đổi</button>
                     </div>
                 </form>
             </Modal>
