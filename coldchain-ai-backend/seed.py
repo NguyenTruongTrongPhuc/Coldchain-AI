@@ -52,14 +52,30 @@ def seed_data():
         if db.query(Shipment).count() == 0 and all_devices:
             logger.info("Bắt đầu thêm dữ liệu mẫu cho lô hàng...")
             shipments_to_seed = []
+            
+            # Thêm tọa độ GPS cho các địa điểm
+            locations = {
+                "Kho Thủ Đức": {"lat": 10.8494, "lng": 106.7537},
+                "Cảng Cát Lái": {"lat": 10.7593, "lng": 106.7733},
+                "Kho Đà Nẵng": {"lat": 16.0544, "lng": 108.2022},
+                "Kho Cần Thơ": {"lat": 10.0452, "lng": 105.7469}
+            }
+            start_locations = list(locations.keys())
+
             for i in range(10):
+                start_location_name = random.choice(start_locations)
+                start_coords = locations[start_location_name]
+                
                 shipments_to_seed.append(
                     Shipment(
                         name=f"Lô hàng {random.choice(['Vắc-xin', 'Trái cây', 'Hải sản'])} #{i+1}",
                         status=random.choice(["pending", "in_transit", "completed", "failed"]),
                         device_id=all_devices[i].id,
-                        start_location=random.choice(["Kho Thủ Đức", "Cảng Cát Lái"]),
-                        end_location=random.choice(["Kho Long Biên", "Sân bay Nội Bài"])
+                        start_location=start_location_name,
+                        end_location=random.choice(["Kho Long Biên", "Sân bay Nội Bài"]),
+                        # Thêm tọa độ GPS ban đầu
+                        current_lat=start_coords["lat"],
+                        current_lng=start_coords["lng"]
                     )
                 )
             db.add_all(shipments_to_seed)
@@ -73,7 +89,7 @@ def seed_data():
             logger.info("Bắt đầu thêm dữ liệu mẫu cho cảnh báo...")
             alerts_to_seed = []
             for i, shipment in enumerate(all_shipments):
-                if i % 2 == 0: # Tạo cảnh báo cho một nửa số lô hàng
+                if i % 2 == 0:
                     alerts_to_seed.append(
                         Alert(
                             shipment_id=shipment.id,
@@ -84,7 +100,6 @@ def seed_data():
                             timestamp=datetime.now() - timedelta(hours=i)
                         )
                     )
-            # Tạo một vài cảnh báo đã xử lý
             if len(all_shipments) > 1:
                  alerts_to_seed.append(Alert(shipment_id=all_shipments[1].id, alert_type="Dự báo nguy cơ", message="AI dự báo nguy cơ", priority="Thấp", status="resolved", resolution_note="Đã kiểm tra, không có vấn đề.", resolved_by_user_id=admin_user.id, resolved_at=datetime.now()))
             
@@ -118,4 +133,4 @@ if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
     logger.info("Tạo bảng thành công.")
     seed_data()
-    logger.info("--- QUÁ TRÌNH SEED DATABASE HOÀN TẤT ---") 
+    logger.info("--- QUÁ TRÌNH SEED DATABASE HOÀN TẤT ---")

@@ -31,7 +31,13 @@ export interface Shipment {
     status: string;
     start_location: string | null;
     end_location: string | null;
-    device: Device | null; // Lồng thông tin thiết bị vào đây
+    device: Device | null;
+
+    // THÊM THUỘC TÍNH CÒN THIẾU
+    currentLocation?: { 
+        lat: number;
+        lng: number;
+    };
 }
 
 export interface ActivityLog {
