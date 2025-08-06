@@ -1,0 +1,130 @@
+version: '3.8'
+
+networks:
+  kong-net:
+    name: kong-net
+    driver: bridge
+
+services:
+  # PostgreSQL service cho toàn bộ hệ thống
+  coldchain-database:
+    image: postgres:17.0
+    container_name: coldchain-database
+    environment:
+      POSTGRES_USER: coldchain
+      POSTGRES_PASSWORD: coldchain
+      POSTGRES_DB: coldchain_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-sql:/docker-entrypoint-initdb.d
+      - ./create-kong-db.sql:/docker-entrypoint-initdb.d/01-create-kong-db.sql
+    networks:
+      - kong-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coldchain"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  create-kong-db:
+    image: postgres:17.0
+    container_name: create-kong-db
+    depends_on:
+      coldchain-database:
+        condition: service_healthy
+    command: >
+      sh -c "
+        PGPASSWORD=coldchain psql -h coldchain-database -U coldchain -d coldchain_db -c 'CREATE DATABASE kong OWNER coldchain;' || true
+      "
+    networks:
+      - kong-net
+    restart: "no"
+
+  kong-migrations:
+    image: kong:latest
+    container_name: kong-migrations
+    command: "kong migrations bootstrap"
+    depends_on:
+      - create-kong-db
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: coldchain-database
+      KONG_PG_USER: coldchain
+      KONG_PG_PASSWORD: coldchain
+      KONG_PG_DATABASE: kong
+    networks:
+      - kong-net
+    restart: on-failure
+
+  kong:
+    image: kong:latest
+    container_name: kong
+    depends_on:
+      - kong-migrations
+    networks:
+      - kong-net
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: coldchain-database
+      KONG_PG_USER: coldchain
+      KONG_PG_PASSWORD: coldchain
+      KONG_PG_DATABASE: kong
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
+      KONG_PROXY_LISTEN: "0.0.0.0:8080, 0.0.0.0:8443 ssl"
+      KONG_SSL_CERT: /etc/kong/certs/fullchain.pem
+      KONG_SSL_CERT_KEY: /etc/kong/certs/privkey.pem
+      KONG_NGINX_HTTP_SSL_PROTOCOLS: "TLSv1.2 TLSv1.3"
+      KONG_LOG_LEVEL: info
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/letsencrypt/live/coldchain.phthanh.pro/fullchain.pem:/etc/kong/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/coldchain.phthanh.pro/privkey.pem:/etc/kong/certs/privkey.pem:ro
+    ports:
+      - "8001:8001"   # Admin API
+      - "8002:8002"   # Kong Manager GUI
+      - "80:8080"     # HTTP proxy
+      - "443:8443"    # HTTPS proxy
+    restart: unless-stopped
+
+  coldchain-backend:
+    image: python:3.12
+    container_name: coldchain-backend
+    working_dir: /server
+    volumes:
+      - ./coldchain-ai-backend:/server
+    command: sh -c "pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload"
+    networks:
+      - kong-net
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    expose:
+      - "5000"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - coldchain-database
+
+  coldchain-frontend:
+    image: node:23
+    container_name: coldchain-frontend
+    working_dir: /app
+    volumes:
+      - ./coldchain-ai-frontend:/app
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - kong-net
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
