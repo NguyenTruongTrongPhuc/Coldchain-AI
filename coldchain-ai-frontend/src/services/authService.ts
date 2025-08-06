@@ -6,7 +6,8 @@ export const loginUser = (credentials: LoginCredentials) => {
     const params = new URLSearchParams();
     params.append('username', credentials.email);
     params.append('password', credentials.password);
-
+    console.log('Login params:', params.toString());
+    console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
     return apiClient.post('/auth/login', params, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });

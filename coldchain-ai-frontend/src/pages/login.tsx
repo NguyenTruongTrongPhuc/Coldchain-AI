@@ -11,6 +11,7 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false); // State cho con mắt
 
     const handleSubmit = async (e: React.FormEvent) => {
+        console.log('Submitting login form');
         e.preventDefault();
         if (loading) return;
         setLoading(true);

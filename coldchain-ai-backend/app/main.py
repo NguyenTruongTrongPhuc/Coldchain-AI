@@ -17,7 +17,7 @@ app = FastAPI(
 # Cấu hình CORS (Cross-Origin Resource Sharing)
 # Cho phép Frontend (chạy ở domain khác) có thể gọi API này.
 origins = [
-    "http://localhost:3000",  # Địa chỉ của React/Next.js dev server
+    "https://coldchain.phthanh.pro/",  # Địa chỉ của React/Next.js dev server
     # Thêm các domain khác của frontend ở đây nếu cần
 ]
 

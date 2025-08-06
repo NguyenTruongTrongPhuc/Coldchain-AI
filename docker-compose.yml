@@ -19,7 +19,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-sql:/docker-entrypoint-initdb.d
-      - ./create-kong-db.sql:/docker-entrypoint-initdb.d/01-create-kong-db.sql
     networks:
       - kong-net
     healthcheck:
